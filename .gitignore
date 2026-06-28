@@ -1,0 +1,19 @@
+# Object files
+*.o
+object_files/
+
+# Executables
+assembler
+assembler.exe
+
+# OS generated files
+.DS_Store
+
+# IDEs
+.vscode/
+
+# Output files
+*.ob
+*.ent
+*.ext
+*.am

@@ -12,7 +12,7 @@ enum {ADD , CHANGE};
 enum {INSTRUCTIONAL, COMMAND};
 
 /*For classify the label */
-enum {DATA,  EXTERN, ENTRY, CODE, MACRO};
+enum {DATA,  EXTERN, ENTRY, CODE, MACRO, USE_LABEL, DATA_ENTRY, CODE_ENTRY};
 
 typedef enum {OFF , ON} flag; /* on and off flag*/
 
@@ -58,11 +58,14 @@ enum {IMMEDIATE_ADDRESING, DIRECT_ADDRESING, INDIRECT_REGISTER_ADDRESING, DIRECT
 /* -------------------------------------------------------------------------------------------- */
 #define SUM_COMMANDS 16
 #define SUM_REGISTERS 8
+#define MEMORY_SIZE 4096
+#define UNKNOWEN -2
+#define START_POINT 100
 
 #define SHIFT_UPCODE 11	
 #define SHIFT_NUM 3
 #define SHIFT_TARGET_LOCATION 3
-#define SHIFT_SOURCE_LOCATION 7
+#define SHIFT_SOURCE_LOCATION 6
 
 #define TURN_ON_SRC_IMMEDIATE 7
 #define TURN_ON_SRC_DIRECT 8
@@ -75,6 +78,8 @@ enum {IMMEDIATE_ADDRESING, DIRECT_ADDRESING, INDIRECT_REGISTER_ADDRESING, DIRECT
 #define TURN_ON_TRGT_DIRECT_REG 6
 
 
+#define TURN_ON_E 1
+#define TURN_ON_R 2
 
 #define TURN_ON_A 2
 #define GETS_TWO_OPERANDS 4

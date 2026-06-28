@@ -50,19 +50,17 @@ list* create_new_list(flag *allocation_error){
  * @param allocation_error Pointer to a flag that indicates if there was an allocation error.
  */
 void add_to_list(list *command_list, char *name, int value, int label_type, flag *allocation_error) {
-    int i;
     list *current = command_list, *temp;  
 
     if(command_list->name == NULL && command_list->value == UNINITIALIZED && command_list->label_type == UNINITIALIZED && command_list->next == NULL){
         if(name != NULL){
-            command_list->name = (char*)malloc(strlen(name)*sizeof(char));
+            command_list->name = (char*)malloc((strlen(name)+1)*sizeof(char));
             if (command_list->name == NULL) {
                 *allocation_error = ON;
                 return;
             }
             /* Initialize the new element */
-            for(i = 0; i <= strlen(name); i++)
-                command_list->name[i] = name[i];
+            strcpy(command_list->name, name);
         }
         command_list->value = value;
         command_list->label_type = label_type;
@@ -75,22 +73,21 @@ void add_to_list(list *command_list, char *name, int value, int label_type, flag
     }
 
     if(name != NULL){
-        temp->name = (char*)malloc(strlen(name)*sizeof(char));
+        temp->name = (char*)malloc((strlen(name)+1)*sizeof(char));
         if (temp->name == NULL) {
             *allocation_error = ON;
             return;
         }
         /* Initialize the new element */
-        for(i = 0; i <= strlen(name); i++)
-            temp->name[i] = name[i];
+        strcpy(temp->name, name);
     }
     else temp->name = NULL;
+    
 
     temp->value = value;
     temp->label_type = label_type;
     temp->next = NULL;
     
-    current = command_list;
     while(current->next != NULL) current = current->next; /*move to the last node in the list*/
 
     current->next = temp;  /* Point the new element to the head's next element */ 
@@ -114,7 +111,7 @@ list *list_search(list *command_list, char *name){
         return NULL;
     }
     do{        /* Traverse the linked list */
-        if (current->name != NULL && strcmp(current->name, name) == 0) {
+        if (current->name != NULL && strcmp(current->name, name) == 0){
             return current;  /* Return the found element */
         }
         current = current->next;
@@ -132,6 +129,7 @@ list *list_search(list *command_list, char *name){
 void free_list(list *command_list){
     list *temp, *current = command_list;
     
+    if (command_list == NULL) return;
     do{
         temp = current;
         current = current->next;
@@ -167,8 +165,7 @@ void edit_or_add_to_list(list *command_list, char *name, int value, int label_ty
             *allocation_error = ON;
             return;
         }
-        for(i = 0; i < strlen(name); i++) temp->name[i] = name[i];
-        name[i] = '\0';
+        for(i = 0; i <= strlen(name); i++) temp->name[i] = name[i];
         temp->value = value;
         temp->label_type = label_type;
     }
@@ -185,26 +182,81 @@ void edit_or_add_to_list(list *command_list, char *name, int value, int label_ty
 int return_type(list *node){
     return node->label_type;
 }
-void print_binary(int num, int bit_length);    /*to eraese*/
 
-void print_list(list *node){  
-    list *cur = node;
+char* return_name(list *node){
+    return node->name;
+}
 
-    while(cur != NULL){
-        if(cur->name != NULL)
-            printf("The name is %s\n", cur->name);
-        else printf("The name is undefined\n");
-        if(cur->label_type == UNINITIALIZED)
-            printf("The type is uninitialized\n");
-        else if(cur->label_type == DATA) printf("The type is data\n");
-        else if(cur->label_type == EXTERN) printf("The type is extern\n");
-        else if(cur->label_type == ENTRY)  printf("The type is entry\n");
-        else if(cur->label_type == CODE)  printf("The type is code\n");
-        else if(cur->label_type == MACRO)  printf("The type is macro\n");
-        printf("The value is:\n");
-        if(cur->label_type == CODE || cur->label_type == DATA) print_binary(cur->value, 15);
-        else printf("%d\n", cur->value);
-        cur = cur->next;
+int return_value(list *node){
+    return node->value;
+}
+
+list* return_next(list *node){
+    return node->next;
+}
+
+void change_value(list *node, int new_val){
+    node->value = new_val;
+}
+
+void change_type(list *node, int new_type){
+    node->label_type = new_type;
+}
+
+
+list *sort_list(list *node, flag *allocation_error){
+    list *sorted = NULL; /* Create a new sorted (empty) list */
+    list *current = node;
+    list *next;
+    list *new_node, *temp, *prev;
+
+    
+
+    if(node->name == NULL && node->label_type == UNINITIALIZED && node->value == UNINITIALIZED)
+        return NULL;
+
+    while (current != NULL) {
+        next = current->next;
+
+        new_node = (list *)malloc(sizeof(list));
+        if (new_node == NULL) {
+            *allocation_error = ON;
+            return NULL;
+        }
+        new_node->name = (char *)malloc(strlen(current->name) + 1);
+        if (new_node->name == NULL){
+            free(new_node);
+            *allocation_error = ON;
+            return NULL;
+        }
+        strcpy(new_node->name, current->name);
+        new_node->value = current->value;
+        new_node->label_type = current->label_type;
+        new_node->next = NULL;
+
+        if(sorted == NULL || sorted->value > new_node->value){ /*didnt start sorting or the value is smaller the the first element*/
+            new_node->next = sorted; /*this is the first*/
+            sorted = new_node;
+        }else{
+            temp = sorted;
+            prev = NULL;
+
+            while(temp != NULL && temp->value < new_node->value){ /*enter the node at the right place*/
+                prev = temp;
+                temp = temp->next;
+            }
+
+            if (prev == NULL) { 
+                new_node->next = sorted;
+                sorted = new_node;
+            } else {
+                new_node->next = temp;
+                prev->next = new_node;
+            }
+        }
+
+        current = next;
     }
 
+    return sorted;
 }

@@ -66,14 +66,26 @@ void free_list(list *command_list);
  */
 void edit_or_add_to_list(list *command_list, char *name, int value, int label_type, flag *allocation_error);
 
-/**
- * @brief Returns the type of the label.
- *
- * This function returns the label_type of the specified node.
- *
- * @param node Pointer to the node.
- * @return The label_type of the node.
- */
+
 int return_type(list *node);
 
-void print_list(list *node); /*to erase*/
+char* return_name(list *noed);
+
+int return_value(list *node);
+
+list* return_next(list *node);
+
+void change_value(list *node, int new_val);
+
+void change_type(list *node, int new_type);
+
+/**
+ * @brief Creates a new empty list element.
+ *
+ * This function allocates memory for a new list element, initializes its fields
+ * to default values (NULL or UNINITIALIZED), and returns a pointer to it.
+ *
+ * @param allocation_error Pointer to a flag that is set to ON if memory allocation fails.
+ * @return Pointer to the newly created list element, or NULL if memory allocation fails.
+ */
+list *sort_list(list *node, flag *allocation_error);

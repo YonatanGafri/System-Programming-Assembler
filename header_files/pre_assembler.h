@@ -55,8 +55,9 @@ void free_macro(Macro*);
  * ensure correct syntax, and detect errors.
  *
  * @param file Pointer to the input file to be processed.
- * @param command_list Pointer to the list of commands.
  * @param file_name The name of the file being processed.
+ * @param allocation_error Pointer to a flag that indicates if there was an allocation error.
  * @return OFF if no errors were found during the check, otherwise returns ON.
  */
-flag pre_assembler_check(FILE *file, list *command_list, const char *file_name);
+flag pre_assembler_check(FILE *file, const char *file_name, flag *allocation_error);
+

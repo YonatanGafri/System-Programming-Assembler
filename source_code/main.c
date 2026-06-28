@@ -3,19 +3,13 @@
 #include "helper.h"
 #include "pre_assembler.h"
 #include "assembler.h"
-
-/*	while error checking, make sure entry and extern is good
-	make function edit_or_add_to_list
-	if its direct addresing it uses only 12 bits
-*/
 	
 int main(int argc, char *argv[]) {
 	int i;
 	char* filename = NULL;
 	flag error = OFF;
 	flag allocation_error = OFF;
-	list *command_list = create_new_list(&allocation_error);
-	if(allocation_error == ON) allocation_error_handle("");		
+	list *command_list;	
     	
 	/*Check if was porivided any file*/
 	if (argc < 2) {
@@ -25,24 +19,25 @@ int main(int argc, char *argv[]) {
 	
     	/* Process each file */
     	for (i = 1; i < argc; i++) {
-            filename = add_postfix(argv[i], ".as", ADD, &allocation_error);
-			if(allocation_error == ON) allocation_error_handle("l", command_list);	
-            error = pre_assembler(filename, command_list);
+			command_list = create_new_list(&allocation_error);
+			if(allocation_error == ON) allocation_error_handle("");	/*exit if allocation error accured*/
+            filename = add_postfix(argv[i], ".as", ADD, &allocation_error); /*add the.as to the filename*/
+			if(allocation_error == ON) allocation_error_handle("l", command_list);	/*exit if allocation error accured*/
+            error = pre_assembler(filename, command_list); /*the macro level*/
             free(filename);/* Free allocated memory for filename after use */
-			if(error == ON) {continue;} /*continue to the next file*/
+			if(error == ON){ /*continue to the next file*/
+				free_list(command_list);
+				continue;
+			} 
 			filename = add_postfix(argv[i], ".am", ADD, &allocation_error);
 			if(allocation_error == ON) allocation_error_handle("l", command_list);	
 			error = first_assembler(filename, command_list);
+			if(error == ON) printf("Couldn't create the %s object file\n", filename);
+			else printf("Object file for %s created sucssesfuli\n", argv[i]);
 			free(filename);
-			if(error == ON) continue;
-
-			/*error = second_assembler()*/
-			
+			free_list(command_list);
     	}
-	/*	for(temp = command_list; temp != NULL; temp = temp->next){
-			printf("the name is: %s\n", temp->name);
-		}*/
-		free_list(command_list);
+		
 
     return 0;
 }

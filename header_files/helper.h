@@ -69,3 +69,6 @@ char *get_word(char *ptr, flag *allocation_error);
  * @param ... The arguments to be freed.
  */
 void allocation_error_handle(char *format, ...);
+
+
+int find_word_in_file(char *filename, char *word);

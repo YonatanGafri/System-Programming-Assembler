@@ -232,3 +232,38 @@ void allocation_error_handle(char *format, ...){
     printf("Allocation error!\n");
     exit(1);
 }
+
+/* 
+ * Function: find_word_in_file
+ * ---------------------------
+ * This function searches for a given word in a file.
+ * If the word is found, it returns the line number where the word is found.
+ * If the word is not found or an error occurs, it returns -1.
+ */
+
+int find_word_in_file(char *filename, char *word) {
+    FILE *file;  
+    char line[MAX_LINE_LENGTH];  
+    int line_num = 0;  
+    flag found = OFF;  /* Flag to indicate if the word is found */
+
+    file = fopen(filename, "r");  
+    if (file == NULL) {  
+        print_error("Error opening file", UNINITIALIZED, filename);  
+        return -1;  
+    }
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        line_num++;  
+        if (strstr(line, word) != NULL) {  
+            found = ON;  
+            break;  
+        }
+    }
+
+    fclose(file);  
+
+    if (found)
+        return line_num;  
+    else return -1;
+}

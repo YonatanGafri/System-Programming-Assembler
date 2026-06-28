@@ -56,12 +56,11 @@ void get_string(char *line, int *DC, list *data_image, flag *allocation_error);
  * and adds them to the data image at the specified DC address.
  *
  * @param line The line of text containing the labels.
- * @param data_image Pointer to the list representing the data image.
- * @param DC Pointer to the data counter.
+ * @param command_list Pointer to the list representing the symbole list.
  * @param label_type The type of the label (e.g., EXTERN, ENTRY).
  * @param allocation_error Pointer to a flag that indicates if there was an allocation error.
  */
-void get_labels(char *line ,list *data_image, int *DC , int label_type, flag *allocation_error);
+void get_labels(char *line ,list *command_list, int label_type, flag *allocation_error);
 
 /**
  * @brief Processes a directive line and updates the data image and command list accordingly.
@@ -90,5 +89,3 @@ void directive_line(char *line, int *DC, list *command_list, list *data_image, f
  * @param allocation_error Pointer to a flag that indicates if there was an allocation error.
  */
 void command_line(char *line, int  *DI, list *command_list, list *encoded_line, flag *allocation_error);
-
-void second_assembler(char *name, list *command_list);

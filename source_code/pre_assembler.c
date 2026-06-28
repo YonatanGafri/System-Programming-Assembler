@@ -12,13 +12,13 @@
 #include "ass_other.h"
 #include "pre_assembler.h"
 
+/*a struct for the macro lines*/
 struct Macro{
     char *macr_name; 
     char **lines; /* Array of strings to store lines from the buffer */
     int num_lines; /* Number of lines */
     struct Macro *next;
 };
-
 
 /**
  * @brief Preprocesses an assembler file by expanding macros defined within it.
@@ -32,8 +32,8 @@ struct Macro{
  */
 flag pre_assembler(const char* filename, list *command_list){
 	FILE *fd;
-	char *word = NULL; /*Max string related to macro definition */
-	char *name = NULL;/*Max size of name of macro*/
+	char *word = NULL; 
+	char *name = NULL;
 	char *ptr;
 	int i, j = 0;
 	Macro* current = NULL;
@@ -44,68 +44,67 @@ flag pre_assembler(const char* filename, list *command_list){
 	flag inside_macro = OFF;
 	flag go_next_line = OFF;
 	flag allocation_error = OFF;
-	char buffer[MAX_LINE_LENGTH]; /*Size was declared in the header file*/
+	char buffer[MAX_LINE_LENGTH]; /*Size was declared in the header file, using this only if we made sure the line is not over this size*/
+	int line_num = 0;
     	
-	
 	/* Add postfix for the output file */
-	char* expanded_file_name = add_postfix(filename, ".am", CHANGE, &allocation_error);
+	char* expanded_file_name = add_postfix(filename, ".am", CHANGE, &allocation_error); /*change the file name to a .am file*/
 	FILE *expanded_file = fopen(expanded_file_name, "w"); 
-	if(allocation_error == ON) allocation_error_handle("ls", command_list, name);
+	if(allocation_error == ON) allocation_error_handle("ls", command_list, filename); /*exit if allocation error accured*/
 	printf("the input file is called %s\n", filename);
 	printf("the output file is called %s\n", expanded_file_name);
 	
-	
-	/*--------------------------------------------------*/
 	/*Check opening of both files*/
-	if (!(fd = fopen(filename, "r"))) {
-        print_error("Error: Could not open the file", UNINITIALIZED, filename);
-		fclose(expanded_file);
+	if (!(fd = fopen(filename, "r"))) { /*could'n open one of the files*/
+        print_error("Error: Could not open the file", UNINITIALIZED, filename); /*coldnt open the input file*/
+		fclose(fd);
+		free(expanded_file_name);
         return ON;
     }
 	
 	/* Send to check the file for any error, and return true if there is an error */
-	if (pre_assembler_check(fd, command_list, filename) == ON) { 
-        fclose(fd);
-		remove(expanded_file_name);
+	if (pre_assembler_check(fd, filename, &allocation_error) == ON){
+		if(allocation_error == ON) allocation_error_handle("lss", command_list, expanded_file_name, filename); /*exit if allocation error accured*/
+        fclose(fd);  /*close the open files*/ 
+		free(expanded_file_name);
         return ON;
     }
-	
-	/*--------------------------------------------------*/
-	if (!expanded_file){
-		print_error("Error: Could not create a new file", UNINITIALIZED, expanded_file_name);
-		fclose(fd);
-        return ON;
+	expanded_file = fopen(expanded_file_name, "w");
+	if(!expanded_file){
+		print_error("Error: Could not open the file", UNINITIALIZED, expanded_file_name); /*coulnt creat the new file*/
+		free(expanded_file_name);
+		return ON;
 	}
+
 	
-	
-	/*--------------------------------------------------*/
-	
-	while (fgets(buffer, MAX_LINE_LENGTH, fd)){
+	while (fgets(buffer, MAX_LINE_LENGTH, fd)){ /*there no errors in the macro level, so we can assume a max buffer*/
+		line_num++; /*every iteration is a new line*/
 		ptr = buffer;
 		i = 0;
-		while(isspace(ptr[i])) i++;
+		while(ptr[i] != '\0' && isspace(ptr[i])) i++;
 		if (ptr[i] == '\0' || ptr[i] == '\n' || ptr[i] == ';') continue; /*Either empty or comment line, continue to the next line*/
-		free(word);
+		free(word); /*if word is null it does nothing*/
 		word = get_word(ptr+i, &allocation_error);
-		if(allocation_error == ON) allocation_error_handle("lssm", command_list, name, word, firstMacroPointer);
+		if(allocation_error == ON) allocation_error_handle("lssssm", command_list, filename, expanded_file_name, word, name, firstMacroPointer);
 		
 		if(strcmp(word, "macr") == 0){/*Decalre a new macro*/
 			inside_macro = ON;
 			/*go to the name of macro*/
 			while(!isspace(ptr[i])) i++;
 			while(isspace(ptr[i])) i++;
-			free(name);
+			free(name); /*if word is null it does nothing*/
+
 			name = get_word(ptr+i, &allocation_error);
-			if(allocation_error == ON) allocation_error_handle("lssm", command_list, name, word, firstMacroPointer);
+			if(allocation_error == ON)allocation_error_handle("lssssm", command_list, filename, expanded_file_name, word, name, firstMacroPointer);
+
 			add_to_list(command_list, name, UNINITIALIZED, MACRO, &allocation_error); /* Add the macro to the command list */
-			if(allocation_error == ON) allocation_error_handle("lssm", command_list, name, word, firstMacroPointer);
-			printf("word - %s,  name  %s\n", word, name);
+			if(allocation_error == ON)allocation_error_handle("lssssm", command_list, filename, expanded_file_name, word, name, firstMacroPointer);
 
 			if (new_macro != NULL){/*We have already and macro*/
 				prev = new_macro;
 			}
 			new_macro = create_macro(name, &allocation_error);
-			if(allocation_error == ON) allocation_error_handle("lssm", command_list, name, word, firstMacroPointer);
+			if(allocation_error == ON) allocation_error_handle("lssssm", command_list, filename, expanded_file_name, word, name, firstMacroPointer);
 			if(prev != NULL){
 				prev->next = new_macro;
 			}
@@ -137,11 +136,11 @@ flag pre_assembler(const char* filename, list *command_list){
 			go_next_line = OFF;
 			continue;
 		}
-
+	
 		
 		if(inside_macro == ON){
 			add_line_to_macro(new_macro, buffer, &allocation_error);
-			if(allocation_error == ON) allocation_error_handle("lssmm", command_list, name, word, firstMacroPointer, new_macro);
+			if(allocation_error == ON) allocation_error_handle("lssssm", command_list, filename, expanded_file_name, word, name, firstMacroPointer);
 			j++;
 		}else { /*inside_macro == OFF, copy each line*/
 			fputs(buffer, expanded_file);
@@ -150,12 +149,10 @@ flag pre_assembler(const char* filename, list *command_list){
 	
 	free(word);
 	free(name);
-	
-	free_macro(firstMacroPointer);	
+	free(expanded_file_name);
+	free_macro(firstMacroPointer);
 	fclose(fd);
-	/*assembler(expanded_file_name);*/	/*Send to the assembler*/
     fclose(expanded_file);
-	printf("files were closed\n");
 	
 	return OFF;
 }
@@ -173,13 +170,13 @@ flag pre_assembler(const char* filename, list *command_list){
 Macro* create_macro(const char* name, flag *allocation_error){
 	Macro* new_macro;
 
-	new_macro = (Macro*)malloc(sizeof(Macro));
-	if (new_macro == NULL) {
+	new_macro = (Macro*)malloc(sizeof(Macro)); /*allocate memory for the Macro struct*/
+	if (new_macro == NULL) { /*memory allocation faild*/
         *allocation_error = ON;
 		return NULL;
     }
-	new_macro->macr_name = (char*)malloc(strlen(name) + 1);
-	if (new_macro->macr_name == NULL) {
+	new_macro->macr_name = (char*)malloc(strlen(name) + 1); /*allocate memory for the name*/
+	if (new_macro->macr_name == NULL) { /*memory allocation faild*/
         *allocation_error = ON;
 		return NULL;
     }
@@ -253,8 +250,6 @@ void free_macro(Macro* current){
 }
 /*----------------------------------------------------------------------------------------------*/
 	
-
-
 /**
  * @brief Performs pre-processing checks on the input file.
  *
@@ -263,22 +258,29 @@ void free_macro(Macro* current){
  * The function does not change the file pointer.
  *
  * @param file Pointer to the input file to be processed.
- * @param command_list Pointer to the list of commands.
  * @param file_name The name of the file being processed.
+ * @param allocation_error Pointer to a flag that indicates if there was an allocation error.
  * @return OFF if no errors were found during the check, otherwise returns ON.
  */
-flag pre_assembler_check(FILE *file, list *command_list, const char *file_name){
+flag pre_assembler_check(FILE *file, const char *file_name, flag *allocation_error){
     flag new_line = ON;             /* Flag to track if we are at the start of a new line */
     flag there_is_macro = OFF;      /* Flag to track if we are inside a macro definition */
     flag there_is_error = OFF;      /* Flag to indicate if any errors were encountered */
-	flag allocation_error = OFF;
     char *word = NULL, *temp_line = NULL;                     /* Pointer to store the current word read from the file */
     int line = 1;                   /* Line number in the file being processed */
     long start_pos = ftell(file), temp;   /* Starting position in the file */
+	list *temp_list = create_new_list(allocation_error);
+	if(*allocation_error == ON){
+		return ON;
+	}
 
 	
-	while((temp_line = fget_line(file, &allocation_error)) != NULL){
-		if(temp_line == NULL) allocation_error_handle("sl", temp_line, command_list);
+	while((temp_line = fget_line(file, allocation_error)) != NULL){ /*go thrue the lines to make sure the length is good*/
+		if(*allocation_error == ON){
+			free(temp_line);
+			free_list(temp_list);
+			return ON;
+		}
 		if(strlen(temp_line) > MAX_LINE_LENGTH){
 			print_error("To many characters", line, file_name);
 			there_is_error = ON;
@@ -289,73 +291,126 @@ flag pre_assembler_check(FILE *file, list *command_list, const char *file_name){
 	fseek(file, start_pos, SEEK_SET); /* Reset file pointer to the starting position */
 	line = 1;
 
-    while (!feof(file)) { /* Loop through the file until EOF is reached */
-        while ((word = fget_word(file, &allocation_error)) != NULL) {
-			if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+    while (!feof(file)) { /* Loop through the file lines until EOF is reached */
+        while ((word = fget_word(file, allocation_error)) != NULL) {
+			if(*allocation_error == ON){
+				free(word);
+				free_list(temp_list);
+				return ON;
+			}
+			if(new_line == ON && word[0] == ';') /*move to the next line*/{
+				do{free(word);} while ((word = fget_word(file, allocation_error)) != NULL);
+				break;
+			}
+
             if (strcmp(word, "macr") == 0 && new_line == OFF) { /* Check for illegal macro definition at the beginning of a line */
                 print_error("Invalid macro definition", line, file_name);
                 there_is_macro = ON;
                 there_is_error = ON;
-                do{free(word);} while ((word = fget_word(file, &allocation_error)) != NULL);
-				if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+                do{free(word);} while ((word = fget_word(file, allocation_error)) != NULL);
+				if(*allocation_error == ON){
+					free(word);
+					free_list(temp_list);
+					return ON;
+				}
                 break;
             }
             if (strcmp(word, "macr") == 0) { /* Process 'macr' keyword */
                 if (there_is_macro == ON) { /* Check for nested macro definition */
                     print_error("Nested macro", line, file_name);
                     there_is_error = ON;
-                    do{free(word);} while ((word = fget_word(file, &allocation_error)) != NULL);
-					if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+                    do{free(word);} while ((word = fget_word(file, allocation_error)) != NULL); 
+					if(*allocation_error == ON){
+						free(word);
+						free_list(temp_list);
+						return ON;
+					}
                     break;
                 } else {
                     there_is_macro = ON; /* Mark that we are inside a macro definition */
                     free(word);
-                    word = fget_word(file, &allocation_error);
-					if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+                    word = fget_word(file, allocation_error);
+					if(*allocation_error == ON){
+						free(word);
+						free_list(temp_list);
+						return ON;
+					}
 					/* Check if the macro name is valid (not already a command or list item) */
-                    if (list_search(command_list, word) != NULL || find_command(word) != -1 || check_label(word) == -1 || find_register(word) != -1) { 
+                    if (list_search(temp_list, word) != NULL || find_command(word) != -1 || check_label(word) == -1 || find_register(word) != -1) { 
                         print_error("Invalid macro name", line, file_name);
                         there_is_error = ON;
-                        do{free(word);} while ((word = fget_word(file, &allocation_error)) != NULL);
-						if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+                        do{free(word);} while ((word = fget_word(file, allocation_error)) != NULL);
+						if(*allocation_error == ON){
+							free(word);
+							free_list(temp_list);
+							return ON;
+						}
                         break;
                     }
-					temp = ftell(file);
+					add_to_list(temp_list, word, UNINITIALIZED, UNINITIALIZED, allocation_error); /* add to the temp list*/
+					if(*allocation_error == ON){
+						free(word);
+						free_list(temp_list);
+						return ON;
+					}
+					temp = ftell(file); /*save theis location in the file*/
 					free(word);
-                    word = fget_word(file, &allocation_error); /* Check for illegal text after macro definition */
-					if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+                    word = fget_word(file, allocation_error); /* Check for illegal text after macro definition */
+					if(*allocation_error == ON){
+						free(word);
+						free_list(temp_list);
+						return ON;
+					}
+
 					fseek(file, temp, SEEK_SET);
                     if (word != NULL) {
                         print_error("Illegal text after macro", line, file_name);
                         there_is_error = ON;
-                        do{free(word);} while ((word = fget_word(file, &allocation_error)) != NULL);
-						if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+                        do{free(word);} while ((word = fget_word(file, allocation_error)) != NULL);
+						if(*allocation_error == ON){
+							free(word);
+							free_list(temp_list);
+							return ON;
+						}
                         break;
                     }
                 }
+
             }
             else if (strcmp(word, "endmacr") == 0) { /* Process 'endmacr' keyword */
                 if (there_is_macro == OFF || new_line == OFF) {      /* Check if 'endmacr' appears outside a macro definition */
                     print_error("Illegal macro ending", line, file_name);
 					there_is_macro = OFF;
                     there_is_error = ON;
-                    do{free(word);} while ((word = fget_word(file, &allocation_error)) != NULL);
-					if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+                    do{free(word);} while ((word = fget_word(file, allocation_error)) != NULL);
+					if(*allocation_error == ON){
+						free(word);
+						free_list(temp_list);
+						return ON;
+					}
                     break;
                 }
                 there_is_macro = OFF; /* Mark that we are no longer inside a macro definition */
                 free(word);
 
                 temp = ftell(file);
-                word = fget_word(file, &allocation_error); /* Check for illegal text after macro definition */
-				if(allocation_error == ON) allocation_error_handle("sl", word, command_list);
+                word = fget_word(file, allocation_error); /* Check for illegal text after macro definition */
+				if(*allocation_error == ON){
+					free(word);
+					free_list(temp_list);
+					return ON;
+				}
 				fseek(file, temp, SEEK_SET);
 
                 if (word != NULL) {
                     print_error("Illegat text after macro", line, file_name);
                     there_is_error = ON;
-                    do{free(word);} while ((word = fget_word(file, &allocation_error)) != NULL);
-					if(allocation_error == ON) return ON;
+                    do{free(word);} while ((word = fget_word(file, allocation_error)) != NULL);
+					if(*allocation_error == ON){
+						free(word);
+						free_list(temp_list);
+						return ON;
+					}
                     break;
                 }
             }
@@ -369,6 +424,7 @@ flag pre_assembler_check(FILE *file, list *command_list, const char *file_name){
         print_error("Missing macro ending", UNINITIALIZED, file_name);
         there_is_error = ON;
     }
+	free_list(temp_list);
     fseek(file, start_pos, SEEK_SET); /* Reset file pointer to the starting position */
 
     return there_is_error; /* Return flag indicating if any errors were found */

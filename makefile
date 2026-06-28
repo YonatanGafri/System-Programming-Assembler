@@ -1,6 +1,6 @@
 # Target executable
-assembler: object_files_dir object_files/main.o object_files/pre_assembler.o object_files/assembler.o object_files/helper_functions.o object_files/check_text.o object_files/ass_other.o object_files/data_struct.o
-	gcc -ansi -Wall -g -pedantic -o assembler object_files/main.o object_files/pre_assembler.o object_files/assembler.o object_files/helper_functions.o object_files/check_text.o object_files/ass_other.o object_files/data_struct.o
+assembler: object_files_dir object_files/main.o object_files/pre_assembler.o object_files/assembler.o object_files/helper_functions.o object_files/check_text.o object_files/ass_other.o object_files/data_struct.o object_files/second_assembler.o
+	gcc -ansi -Wall -g -pedantic -o assembler object_files/main.o object_files/pre_assembler.o object_files/assembler.o object_files/helper_functions.o object_files/check_text.o object_files/ass_other.o object_files/data_struct.o object_files/second_assembler.o
 
 # Create the object_files directory if it doesn't exist
 object_files_dir:
@@ -34,8 +34,11 @@ object_files/ass_other.o: source_code/ass_other.c
 object_files/data_struct.o: source_code/data_struct.c
 	gcc -c -ansi -Wall -pedantic -g -Iheader_files source_code/data_struct.c -o object_files/data_struct.o
 
+# Compile second_assembler.c
+object_files/second_assembler.o: source_code/second_assembler.c
+	gcc -c -ansi -Wall -pedantic -g -Iheader_files source_code/second_assembler.c -o object_files/second_assembler.o
+
 # Clean up object files and the executable
 clean:
-	rm -f object_files/main.o object_files/pre_assembler.o object_files/assembler.o object_files/helper_functions.o object_files/check_text.o object_files/ass_other.o object_files/data_struct.o assembler
+	rm -f object_files/main.o object_files/pre_assembler.o object_files/assembler.o object_files/helper_functions.o object_files/check_text.o object_files/ass_other.o object_files/data_struct.o object_files/second_assembler.o assembler
 	rm -rf object_files
-

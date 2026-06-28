@@ -91,3 +91,11 @@ flag check_extern_instruction(list *command_list, char *line, int line_num, char
  * @return ON if an error is found, otherwise OFF.
  */
 flag check_command_line(char *line, list *command_list, int line_num, char *file_name, flag *allocation_error);
+
+/**
+ * @brief Checks if there is mare aviable memory.
+ *
+ * @param nau the current memory size
+ * @return ON if an the memory is full, otherwise OFF.
+ */
+flag check_memory(int num);

@@ -42,6 +42,7 @@ int find_register(char *word){
  * @return 0 if the label is valid, -1 otherwise.
  */
 int check_label(char *word){
+    /*!!!assuming a label is good also with a '_' character */
     int i, size;
     if((size = strlen(word)) > MAX_LABEL_LENGTH) /* Check if the length of the word exceeds the maximum allowed label length */
         return -1;
@@ -108,8 +109,9 @@ int find_addresing(char *word){
     int i;  
     if(word[0] == '#'){
         for(i = 1; i < strlen(word); i++){
-            if(isdigit(word[i]) == 0)
+            if(!(isdigit(word[i]) || (i == 1 && word[i] == '-'))){
                 return -1;
+            }
         }
         if(atoi(word+1) > MAX_NUMBER_12BIT || atoi(word+1) < MIN_NUMBER_12BIT) 
             return -1;
@@ -141,6 +143,7 @@ int find_addresing(char *word){
 flag check_lable_define(char *line, list *command_list, int line_num, char *file_name, flag *allocation_error){
     char *temp = line, *word = NULL;
     int i;
+    list *temp_node;
 
     for(i = 0; i < strlen(temp) && (temp[i] == ' ' || temp[i] == '\t' || temp[i] == ','); i++){
             if(temp[i] == ','){
@@ -153,7 +156,7 @@ flag check_lable_define(char *line, list *command_list, int line_num, char *file
     if(word[strlen(word) -1] == ':'){   /*the first word is a lable*/
         word[strlen(word)-1] = '\0'; 
         temp += (strlen(word)+1);
-        if(check_label(word) == -1 || find_command(word) != -1 || list_search(command_list, word) != NULL){
+        if(check_label(word) == -1 || find_command(word) != -1 || ((temp_node = list_search(command_list, word)) != NULL && return_type(temp_node) != ENTRY)){
             print_error("Invalid_lable", line_num, file_name);
             free(word);
             return ON;

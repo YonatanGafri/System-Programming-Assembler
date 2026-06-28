@@ -18,11 +18,10 @@ int classify_line(char *line, flag *allocation_error){
     char *temp = line, *word = NULL, c;
     for(; isspace(*temp); temp++);
     word = get_word(temp, allocation_error);
-    if(*allocation_error == ON) return -1;
+    if(*allocation_error == ON || word == NULL) return -1;
     c = word[0];
     free(word);
     
-
     if(c == '.') return INSTRUCTIONAL;
         else return COMMAND;
 }
@@ -52,18 +51,16 @@ flag check_instructional_line(list *command_list, char *line, int line_num, char
     } temp += i;
 
     word = get_word(temp, allocation_error);
-    if(*allocation_error == ON){
-        free(word);
-        return ON;
-    }
+    if(*allocation_error == ON) return ON;
 
+    /*its not data or string or entry or extern*/
     if(strcmp(word+1, "entry") != 0 && strcmp(word+1, "extern") != 0 && strcmp(word+1, "data") != 0 && strcmp(word+1, "string") != 0){
             print_error("Unknown instruction", line_num, file_name);
             free(word);
             return ON;
     }
 
-    else if(strcmp(word+1, "data") == 0){
+    else if(strcmp(word+1, "data") == 0){ /*the line is a data line*/
         if(check_data_instruction(temp+strlen(word), line_num, file_name, allocation_error) == ON){
             free(word);
             return ON;
@@ -74,14 +71,13 @@ flag check_instructional_line(list *command_list, char *line, int line_num, char
         }  
     }   
           
-
-    else if(strcmp(word+1, "string") == 0){
+    else if(strcmp(word+1, "string") == 0){ /*the line is a string line.*/
         if(check_string_instruction(temp+strlen(word), line_num, file_name) == ON){
             free(word);
             return ON;
         }
     }
-    else if(strcmp(word+1, "entry") == 0){
+    else if(strcmp(word+1, "entry") == 0){ /*the line is an entry line !!! in entry an dextern assuming it may have a few operands*/
         if(check_entry_instruction(command_list, temp+strlen(word), line_num, file_name, allocation_error) == ON){
             free(word);
             return ON;
@@ -92,7 +88,7 @@ flag check_instructional_line(list *command_list, char *line, int line_num, char
         } 
     }
     
-    else{
+    else{ /*the line is an extern line*/
         if(check_extern_instruction(command_list, temp+strlen(word), line_num, file_name, allocation_error) == ON){
             free(word);
             return ON;
@@ -357,9 +353,10 @@ flag check_command_line(char *line, list *command_list, int line_num, char *file
     if((command = find_command(word)) < 0){
         print_error("Unknown command", line_num, file_name);
         free(word);
-        return OFF;
+        return ON;
     }
     command_vector[0] = command;
+    
 
     temp += strlen(word);
     free(word);
@@ -415,6 +412,7 @@ flag check_command_line(char *line, list *command_list, int line_num, char *file
 
     if(command_options(command_vector) == ON){
         print_error("Operands don't match the command", line_num, file_name);
+        return ON;
     }
 
     for(; *temp != '\0'; temp++){
@@ -426,9 +424,15 @@ flag check_command_line(char *line, list *command_list, int line_num, char *file
     return error;
 }
 
-
-/*
-flag second_assembler_check(){
-
+/**
+ * @brief Checks if there is mare aviable memory.
+ *
+ * @param nau the current memory size
+ * @return ON if an the memory is full, otherwise OFF.
+ */
+flag check_memory(int num){
+    if(num >= MEMORY_SIZE)
+        return ON;
+    else return OFF;
 }
-*/
+
