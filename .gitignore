@@ -17,3 +17,5 @@ assembler.exe
 *.ent
 *.ext
 *.am
+tests/test_data_struct
+tests/test_helper_functions
